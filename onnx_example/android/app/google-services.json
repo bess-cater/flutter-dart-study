@@ -1,0 +1,76 @@
+{
+  "project_info": {
+    "project_number": "871146571576",
+    "project_id": "cakeshop-731cf",
+    "storage_bucket": "cakeshop-731cf.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:871146571576:android:a8411ea24e4c107108e3cd",
+        "android_client_info": {
+          "package_name": "com.example.cakeshop_fe"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "871146571576-8ii5v2j2fid4tgdv4pif7u5914i1fb7n.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.cakeshop_fe",
+            "certificate_hash": "077450ff64aad6b2f09fca19e5a0b8615b49a3bf"
+          }
+        },
+        {
+          "client_id": "871146571576-dkj26vj8nghekfp938kfetnaegsmda7t.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDcgOq2NGO56zbz_Df_7X3VaKS-zRG3XIU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "871146571576-dkj26vj8nghekfp938kfetnaegsmda7t.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:871146571576:android:eb565f0ffcea7a0108e3cd",
+        "android_client_info": {
+          "package_name": "com.example.you_stupid"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "871146571576-dkj26vj8nghekfp938kfetnaegsmda7t.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDcgOq2NGO56zbz_Df_7X3VaKS-zRG3XIU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "871146571576-dkj26vj8nghekfp938kfetnaegsmda7t.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

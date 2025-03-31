@@ -89,21 +89,30 @@ class _ObjectDetectorState extends State<ObjectDetector>{
   }
   }
 
-  Future _postprocess(List<List<List<double>>> masks, XFile img)
-  async {
+  Future _postprocess(List<List<List<double>>> masks, XFile img) async {
     if (masks == null) return null;
+    
+    // Load original image
+    Uint8List imageBytes = await img.readAsBytes();
+    image_lib.Image? originalImage = image_lib.decodeImage(imageBytes);
+    if (originalImage == null) throw Exception("Failed to decode image");
+
+    // Get dimensions
+    final originImageWidth = originalImage.width;
+    final originImageHeight = originalImage.height;
+
+    // Create mask image with model output dimensions
     final width = masks.length;
-    final height = masks.first.length;
-    // store image matrix
-    List<int> imageMatrix = [];
-    // store labels index to display on screen
+    final height = masks[0].length;
+    List<int> imageMatrix = List.filled(width * height * 4, 0);
     final labelsIndex = <int>{};
 
-    for (int i = 0; i < width; i++) {
-      final List<List<double>> row = masks[i];
-      for (int j = 0; j < height; j++) {
-        final List<double> score = row[j];
-        // find index of max score
+    // Process the masks in correct order
+    for (int x = 0; x < width; x++) {
+      for (int y = 0; y < height; y++) {
+        final List<double> score = masks[x][y];
+        
+        // Find max score index
         int maxIndex = 0;
         double maxScore = score[0];
         for (int k = 1; k < score.length; k++) {
@@ -114,58 +123,51 @@ class _ObjectDetectorState extends State<ObjectDetector>{
         }
         labelsIndex.add(maxIndex);
 
+        // Calculate pixel index in output image
+        final pixelIndex = ((height - 1 - y) * width + x) * 4; // Flip Y coordinates
+        
         if (maxIndex == 0) {
-          imageMatrix.addAll([0, 0, 0, 0]);
+          imageMatrix[pixelIndex + 3] = 0; // Transparent background
           continue;
         }
 
-        // get color from label color
+        // Apply color
         final color = labelColors[maxIndex];
-        // convert color to r,g,b
-        final r = (color & 0x00ff0000) >> 16;
-        final g = (color & 0x0000ff00) >> 8;
-        final b = (color & 0x000000ff);
-        // alpha 50%
-        imageMatrix.addAll([r, g, b, 127]);
+        imageMatrix[pixelIndex] = (color >> 16) & 0xFF;     // R
+        imageMatrix[pixelIndex + 1] = (color >> 8) & 0xFF;  // G
+        imageMatrix[pixelIndex + 2] = color & 0xFF;         // B
+        imageMatrix[pixelIndex + 3] = 127;                  // Alpha
       }
     }
 
-    // convert image matrix to image
-    image_lib.Image convertedImage = image_lib.Image.fromBytes(
-        width: width,
-        height: height,
-        bytes: Uint8List.fromList(imageMatrix).buffer,
-        numChannels: 4);
-    
-  Uint8List imageBytes = await img.readAsBytes();
+    // Create and resize mask image
+    image_lib.Image maskImage = image_lib.Image.fromBytes(
+      width: width,
+      height: height,
+      bytes: Uint8List.fromList(imageMatrix).buffer,
+      numChannels: 4,
+    );
 
-  // Step 2: Decode image into image_lib.Image
-  image_lib.Image? originalImage = image_lib.decodeImage(imageBytes);
-  if (originalImage == null) throw Exception("Failed to decode image");
+    // Resize mask to match original image
+    final resizedMask = image_lib.copyResize(
+      maskImage,
+      width: originImageWidth,
+      height: originImageHeight,
+      interpolation: image_lib.Interpolation.nearest
+    );
 
-  // Step 2: Decode the PNG into a ui.Image
-  ui.Codec codec2 = await ui.instantiateImageCodec(imageBytes);
-  ui.FrameInfo realFrame = await codec2.getNextFrame();
-  
+    // Convert images for display
+    final maskBytes = image_lib.encodePng(resizedMask);
+    final maskCodec = await ui.instantiateImageCodec(maskBytes);
+    final maskFrame = await maskCodec.getNextFrame();
 
-  int originImageWidth = originalImage.width;
-  int originImageHeight = originalImage.height;
-  print(originImageWidth);
-  print(originImageHeight);
+    final originalCodec = await ui.instantiateImageCodec(imageBytes);
+    final originalFrame = await originalCodec.getNextFrame();
 
-    // resize output image to match original image
-    final resizeImage = image_lib.copyResize(convertedImage,
-        width: originImageWidth, height: originImageHeight);
-
-    // convert image to ui.Image to display on screen
-    final bytes = image_lib.encodePng(resizeImage);
-    ui.Codec codec = await ui.instantiateImageCodec(bytes);
-    ui.FrameInfo frameInfo = await codec.getNextFrame();
     setState(() {
-      _displayImage = frameInfo.image;
+      _realImage = originalFrame.image;
+      _displayImage = maskFrame.image;
       _labelsIndex = labelsIndex.toList();
-      _realImage = realFrame.image;
-
     });
   }
 
@@ -174,80 +176,70 @@ class _ObjectDetectorState extends State<ObjectDetector>{
 
   @override
   Widget build(BuildContext context) {
-    var scale = 1.0;
-    if (_displayImage != null) {
-      final minOutputSize = _displayImage!.width > _displayImage!.height
-          ? _displayImage!.height
-          : _displayImage!.width;
-      final minScreenSize =
-          MediaQuery.of(context).size.width > MediaQuery.of(context).size.height
-              ? MediaQuery.of(context).size.height
-              : MediaQuery.of(context).size.width;
-      scale = minScreenSize / minOutputSize;}
     return Scaffold(
-  backgroundColor: Colors.white,
-  body: Column(
-    mainAxisAlignment: MainAxisAlignment.start,
-    children: [
-      Text("Image segmentation"),
-      ElevatedButton.icon(
-        onPressed: () async { processImage(); }, 
-        icon: Icon(Icons.upload),
-        label: Text("Choose from gallery..."),
-      ),
+      backgroundColor: Colors.white,
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Text("Image segmentation"),
+          ElevatedButton.icon(
+            onPressed: () async { processImage(); },
+            icon: Icon(Icons.upload),
+            label: Text("Choose from gallery..."),
+          ),
 
-      // Containing the image inside a field with height 300
-      SizedBox(
-        height: 300, // Fixed height for the container
-        width: double.infinity, // Make it take full width
-        child: Center( // Centers the Stack content
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              if (_realImage != null)
-                RawImage(
-                  image: _realImage,
-                  fit: BoxFit.contain, // Ensures it fits inside the box
-                ),
-
-              if (_displayImage != null)
-                SizedBox(
-                  width: _realImage!.width.toDouble(),
-                  height: _realImage!.height.toDouble(),
-                  child: CustomPaint(
-                    painter: OverlayPainter(_displayImage!),
+          // Image display container
+          SizedBox(
+            height: 300,
+            width: double.infinity,
+            child: Center(
+              child: _realImage != null ? Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Base image
+                  RawImage(
+                    image: _realImage,
+                    fit: BoxFit.contain,
                   ),
-                ),
-            ],
+                  // Overlay mask
+                  if (_displayImage != null)
+                    Positioned.fill(
+                      child: RawImage(
+                        image: _displayImage,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                ],
+              ) : Container(),
+            ),
           ),
-        ),
-      ),
 
-      if (_labelsIndex != null)
-        Align(
-          alignment: Alignment.bottomCenter,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: _labelsIndex!.length,
-            itemBuilder: (context, index) {
-              return Container(
-                margin: const EdgeInsets.all(8),
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Color(labelColors[_labelsIndex![index]]).withOpacity(0.5),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  getLabelsName(_labelsIndex![index]),
-                  style: const TextStyle(fontSize: 12),
-                ),
-              );
-            },
-          ),
-        ),
-    ],
-  ),
-);
+          // Labels list
+          if (_labelsIndex != null)
+            Expanded(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: Set.from(_labelsIndex!).length, // Show unique labels only
+                itemBuilder: (context, index) {
+                  final uniqueLabels = Set.from(_labelsIndex!).toList();
+                  return Container(
+                    margin: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Color(labelColors[uniqueLabels[index]]).withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      getLabelsName(uniqueLabels[index]),
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
+    );
   }
   
 }

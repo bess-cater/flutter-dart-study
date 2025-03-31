@@ -123,8 +123,8 @@ class _ObjectDetectorState extends State<ObjectDetector>{
         }
         labelsIndex.add(maxIndex);
 
-        // Calculate pixel index in output image
-        final pixelIndex = ((height - 1 - y) * width + x) * 4; // Flip Y coordinates
+        // Calculate pixel index in output image - NO FLIP in Y coordinate
+        final pixelIndex = (y * width + x) * 4;  // Removed the flip calculation
         
         if (maxIndex == 0) {
           imageMatrix[pixelIndex + 3] = 0; // Transparent background
@@ -140,7 +140,7 @@ class _ObjectDetectorState extends State<ObjectDetector>{
       }
     }
 
-    // Create and resize mask image
+    // Create mask image
     image_lib.Image maskImage = image_lib.Image.fromBytes(
       width: width,
       height: height,

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:google_mlkit_object_detection/google_mlkit_object_detection.dart';
 
 import 'detector_view.dart';
-import '../painters/default_painter.dart';
 import 'utils.dart';
 import '../painters/custompainter.dart';
 import 'dart:ui' as ui;

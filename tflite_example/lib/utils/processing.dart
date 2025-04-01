@@ -50,11 +50,8 @@ class ImageProcessor{
         },
       ),
     );
-
-    // Set tensor input [1, 257, 257, 3]
     final input = [imageMatrix];
     
-    // Initialize output tensor with correct dimensions
     final output = [
       List.generate(
         _outputShape[1],

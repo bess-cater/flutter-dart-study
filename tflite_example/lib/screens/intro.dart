@@ -179,9 +179,14 @@ class _ObjectDetectorState extends State<ObjectDetector>{
     return Scaffold(
       backgroundColor: Colors.white,
       body: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text("Image segmentation"),
+          Padding(
+            padding: const EdgeInsets.all(30.0),
+            child: Text("Image segmentation", style: TextStyle(
+              fontSize: 24.0,
+            ),),
+          ),
           ElevatedButton.icon(
             onPressed: () async { processImage(); },
             icon: Icon(Icons.upload),

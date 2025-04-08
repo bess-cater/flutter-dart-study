@@ -1,0 +1,5 @@
+package com.example.elastic
+
+import io.flutter.embedding.android.FlutterActivity
+
+class MainActivity : FlutterActivity()

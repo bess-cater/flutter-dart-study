@@ -85,22 +85,22 @@ class _ImplicitPageState extends State<ImplicitPage> {
                   GestureDetector(
                     onTap: scaleContainer,
                     child: TweenAnimationBuilder(
-              tween: myTweenValue,
-              duration: const Duration(seconds: 1),
-              
-              builder: (context, value, child) {
-          
-                // The value will be fetched from the tween
-                // return Transform.scale(
-                //   scale: value,
-                //   child: child,
-                // );
-                return Transform(
-                  
-                  transform: Matrix4.rotationX(value),
-                  child: child,
-                );
-              },
+                        tween: myTweenValue,
+                        duration: const Duration(seconds: 1),
+                        
+                        builder: (context, value, child) {
+                    
+                          // The value will be fetched from the tween
+                          // return Transform.scale(
+                          //   scale: value,
+                          //   child: child,
+                          // );
+                          return Transform(
+                            
+                            transform: Matrix4.rotationX(value),
+                            child: child,
+                          );
+                        },
               child: Container(
                 width: 50,
                 height: 50,
